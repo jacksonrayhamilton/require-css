@@ -8,7 +8,7 @@
 /*
  *
  * Usage:
- *  require(['css!./mycssFile']);
+ *  require(['css!./mycssFile.css']);
  *
  * Tested and working in (up to latest versions as of March 2013):
  * Android
@@ -151,8 +151,8 @@ define(function() {
 
 //>>excludeEnd('excludeRequireCss')
   cssAPI.normalize = function(name, normalize) {
-    if (name.substr(name.length - 4, 4) == '.css')
-      name = name.substr(0, name.length - 4);
+    if (name.substr(name.length - 4, 4) != '.css')
+      name += '.css';
 
     return normalize(name);
   }
@@ -160,7 +160,7 @@ define(function() {
 //>>excludeStart('excludeRequireCss', pragmas.excludeRequireCss)
   cssAPI.load = function(cssId, req, load, config) {
 
-    (useImportLoad ? importLoad : linkLoad)(req.toUrl(cssId + '.css'), load);
+    (useImportLoad ? importLoad : linkLoad)(req.toUrl(cssId), load);
 
   }
 
