@@ -125,28 +125,67 @@ define(function() {
   }
 
   // <link> load method
+  var getStyleSheet = function(url) {
+    for (var i = 0; i < document.styleSheets.length; i++) {
+      var sheet = document.styleSheets[i];
+      if (sheet.href == url) {
+        return sheet;
+      }
+    }
+  }
+  var getLink = function(url) {
+    var links = document.getElementsByTagName('link');
+    for (var i = 0; i < links.length; i++) {
+      var link = links[i];
+      if (link.href == url) {
+        return link;
+      }
+    }
+  }
+  var urlCallbacks = {};
   var linkLoad = function(url, callback) {
+    // Always create a <link> so that we can resolve the absolute url of the
+    // stylesheet (by setting `link.href` to `url`) in order to check for a
+    // <link> already in the DOM
     var link = document.createElement('link');
     link.type = 'text/css';
     link.rel = 'stylesheet';
-    if (useOnload)
+    link.href = url;
+    if (getStyleSheet(link.href)) {
+      // Already loaded
+      setTimeout(callback, 4);
+      return;
+    }
+    var preexisting = getLink(link.href);
+    if (preexisting) {
+      link = preexisting;
+    }
+    if (useOnload) {
+      if (!Object.prototype.hasOwnProperty.call(urlCallbacks, url)) {
+        urlCallbacks[url] = [];
+      }
+      urlCallbacks[url].push(callback);
+      var callCallbacks = function() {
+        while (urlCallbacks[url].length) {
+          urlCallbacks[url].shift()();
+        }
+        delete urlCallbacks[url];
+      }
       link.onload = function() {
         link.onload = function() {};
         // for style dimensions queries, a short delay can still be necessary
-        setTimeout(callback, 7);
+        setTimeout(callCallbacks, 7);
       }
-    else
+    } else
       var loadInterval = setInterval(function() {
-        for (var i = 0; i < document.styleSheets.length; i++) {
-          var sheet = document.styleSheets[i];
-          if (sheet.href == link.href) {
-            clearInterval(loadInterval);
-            return callback();
-          }
+        if (getStyleSheet(link.href)) {
+          clearInterval(loadInterval);
+          return callback();
         }
       }, 10);
-    link.href = url;
-    head.appendChild(link);
+    if (!preexisting) {
+      head.appendChild(link);
+    }
   }
 
 //>>excludeEnd('excludeRequireCss')
